@@ -45,12 +45,23 @@ public class ConvertTool: NSObject {
             let splitArray:[Substring] = str1.split(separator: "=")
             let key = String.init(splitArray.first!)
             let value = String.init(splitArray.last!)
+            codeStr += self.buildCode(key, value: value)
             print(line)
-            
         }
         codeStr.append("\n  var localized: String { return NSLocalizedString(self, comment: \"\")}")
         
         codeStr.append("\n }")
+        let data = codeStr.data(using: .utf8)
+        FileManager.default.createFile(atPath: oPath + "text.txt", contents: data, attributes: nil)
         return true
+    }
+    
+    public func buildCode(_ key:String,value:String) ->String {
+        
+        let newKey = key.replacingOccurrences(of: "\"", with: "").uppercased()
+        let newValue = value.replacingOccurrences(of: "\"", with: "")
+        var codeStr = "/// " + newValue + "\n"
+        codeStr += "public static let \(newKey) = \"\(newValue)\".localized" + "\n"
+        return codeStr
     }
 }
