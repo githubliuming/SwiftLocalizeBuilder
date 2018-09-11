@@ -35,33 +35,45 @@ public class ConvertTool: NSObject {
             throw NSError(domain: "FileNotFound", code: 404, userInfo: nil)
         }
         var isNote = false
-        var codeStr = "extension String {"
+        var codeStr = "extension String {\n"
         for line in reader {
-            
+            if line == "\n"{continue}
             if line.hasPrefix("//") {continue}
             if line.hasSuffix("*/\n") {isNote = false;continue}
             if isNote || line.hasPrefix("/*") {isNote = true;continue}
-            let str1 = line.replacingOccurrences(of: ";", with: "");
+            
+            let str1 = line.replacingOccurrences(of: ";", with: "")
+                .replacingOccurrences(of: " ", with: "");
             let splitArray:[Substring] = str1.split(separator: "=")
             let key = String.init(splitArray.first!)
             let value = String.init(splitArray.last!)
             codeStr += self.buildCode(key, value: value)
             print(line)
         }
-        codeStr.append("\n  var localized: String { return NSLocalizedString(self, comment: \"\")}")
+        codeStr.append("\n\tpublic var localized: String { return NSLocalizedString(self, comment: \"\")}")
         
         codeStr.append("\n }")
         let data = codeStr.data(using: .utf8)
-        FileManager.default.createFile(atPath: oPath + "text.txt", contents: data, attributes: nil)
+        
+        do {
+            try data?.write(to: URL.init(fileURLWithPath: oPath + "/test.swift"), options: Data.WritingOptions.atomic)
+        } catch let error {
+            print("文件写入失败 error = \(error)")
+        }
         return true
     }
     
     public func buildCode(_ key:String,value:String) ->String {
         
-        let newKey = key.replacingOccurrences(of: "\"", with: "").uppercased()
-        let newValue = value.replacingOccurrences(of: "\"", with: "")
-        var codeStr = "/// " + newValue + "\n"
-        codeStr += "public static let \(newKey) = \"\(newValue)\".localized" + "\n"
+        let newKey = key.replacingOccurrences(of: "\"", with: "")
+            .replacingOccurrences(of: " ", with: "_")
+            .replacingOccurrences(of: "\n", with: "")
+            .lowercased()
+        
+        let newValue = value.replacingOccurrences(of: "\"", with: "").replacingOccurrences(of: "\n", with: "")
+        let valueKey  = key.replacingOccurrences(of: " ", with: "")
+        var codeStr = "\t/// " + newValue + "\n"
+        codeStr += "\tpublic static let \(newKey) = \(valueKey).localized" + "\n"
         return codeStr
     }
 }
