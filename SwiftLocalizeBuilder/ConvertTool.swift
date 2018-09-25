@@ -57,6 +57,7 @@ public class ConvertTool: NSObject {
         
         do {
             try data?.write(to: URL.init(fileURLWithPath: oPath + "/test.swift"), options: Data.WritingOptions.atomic)
+            NSWorkspace.shared.open(URL.init(fileURLWithPath: oPath, isDirectory: true))
         } catch let error {
             print("文件写入失败 error = \(error)")
         }
@@ -73,7 +74,7 @@ public class ConvertTool: NSObject {
         let newValue = value.replacingOccurrences(of: "\"", with: "").replacingOccurrences(of: "\n", with: "")
         let valueKey  = key.replacingOccurrences(of: " ", with: "")
         var codeStr = "\t/// " + newValue + "\n"
-        codeStr += "\tpublic static let \(newKey) = \(valueKey).localized" + "\n"
+        codeStr += "\tpublic var  \(newKey):String = { return \(valueKey).localized" + " }\n"
         return codeStr
     }
 }
